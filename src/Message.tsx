@@ -5,7 +5,7 @@ const Message = () => {
   if (name)
     return (
       <>
-        <h1>Hellow {name}</h1>
+        <h1>Hello {name}</h1>
       </>
     );
   return <p>Loser</p>;

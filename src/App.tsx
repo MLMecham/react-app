@@ -1,12 +1,11 @@
 import React from "react";
-import Message from "./Message";
+import ListGroup from "./comonents/ListGroup";
 
 const App = () => {
   return (
-    <div>
-      <h1>Hello Mitch</h1>
-      <Message></Message>
-    </div>
+    <>
+      <ListGroup></ListGroup>
+    </>
   );
 };
 
