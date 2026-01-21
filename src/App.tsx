@@ -1,19 +1,41 @@
 import React from "react";
-import ListGroup from "./components/ListGroup";
-import Alert from "./components/Alert";
-import Button from "./components/Button";
-import { BsFillCalendarFill } from "react-icons/bs";
-import Like from "./components/Like";
+import ExpenseList from "./expense-tracker/components/ExpenseList";
 import { useState } from "react";
-import ExpandableText from "./components/ExpandableText";
+import ExpenseFilter from "./expense-tracker/components/ExpenseFilter";
+import ExpenseForm from "./expense-tracker/components/ExpenseForm";
+import categories from "./expense-tracker/categories";
 
 const App = () => {
-  const text =
-    "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor.";
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [expenses, setExpenses] = useState([
+    { id: 1, description: "none", amount: 20, category: "Utilities" },
+    { id: 2, description: "c", amount: 40, category: "Utilities" },
+    { id: 3, description: "d", amount: 20, category: "Utilities" },
+    { id: 4, description: "e", amount: 20, category: "Utilities" },
+  ]);
+
+  const visibleExpensives = selectedCategory
+    ? expenses.filter((e) => e.category === selectedCategory)
+    : expenses;
+
   return (
     <>
-      <Like size="100" color="orange"></Like>
-      <ExpandableText>{text}</ExpandableText>
+      <div className="mb-5">
+        <ExpenseForm
+          onSubmit={(expense) =>
+            setExpenses([...expenses, { ...expense, id: expenses.length + 1 }])
+          }
+        ></ExpenseForm>
+      </div>
+      <div className="mb-3">
+        <ExpenseFilter
+          onSelectCategory={(category) => setSelectedCategory(category)}
+        ></ExpenseFilter>
+      </div>
+      <ExpenseList
+        expenses={visibleExpensives}
+        onDelete={(id) => setExpenses(expenses.filter((e) => e.id !== id))}
+      ></ExpenseList>
     </>
   );
 };
