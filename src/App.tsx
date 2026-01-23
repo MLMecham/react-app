@@ -1,41 +1,94 @@
-import React from "react";
-import ExpenseList from "./expense-tracker/components/ExpenseList";
-import { useState } from "react";
-import ExpenseFilter from "./expense-tracker/components/ExpenseFilter";
-import ExpenseForm from "./expense-tracker/components/ExpenseForm";
-import categories from "./expense-tracker/categories";
+import React, { useEffect, useRef, useState } from "react";
+import { CanceledError } from "./services/api-client";
+import userService, { User } from "./services/user-service";
 
 const App = () => {
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [expenses, setExpenses] = useState([
-    { id: 1, description: "none", amount: 20, category: "Utilities" },
-    { id: 2, description: "c", amount: 40, category: "Utilities" },
-    { id: 3, description: "d", amount: 20, category: "Utilities" },
-    { id: 4, description: "e", amount: 20, category: "Utilities" },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState("");
+  const [isLoading, setLoading] = useState(false);
 
-  const visibleExpensives = selectedCategory
-    ? expenses.filter((e) => e.category === selectedCategory)
-    : expenses;
+  useEffect(() => {
+    setLoading(true);
+    const { request, cancel } = userService.getAllUsers();
+    request
+      .then((res) => {
+        console.log("getting users", res.data[0].name);
+        setUsers(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (err instanceof CanceledError) return;
+        setError(err.message);
+        setLoading(false);
+      });
+
+    return () => cancel();
+  }, []);
+
+  const deleteUser = (user: User) => {
+    const originalUsers = [...users];
+    setUsers(users.filter((u) => u.id !== user.id));
+    userService.deleteUser(user.id).catch((err) => {
+      setError(err.message);
+      setUsers(originalUsers);
+    });
+  };
+
+  const addUser = () => {
+    const originalUsers = [...users];
+    const newUser = { id: 0, name: "Mitch" };
+    setUsers([newUser, ...users]);
+
+    userService
+      .addUser(newUser)
+      .then((res) => setUsers([res.data, ...users]))
+      .catch((err) => {
+        setError(err.message);
+        setUsers(originalUsers);
+      });
+  };
+
+  const updateUser = (user: User) => {
+    const originalUsers = [...users];
+    const updatedUser = { ...user, name: user.name + "!" };
+    setUsers(users.map((u) => (u.id == user.id ? updatedUser : u)));
+    userService.updateUser(user).catch((err) => {
+      setError(err.message);
+      setUsers(originalUsers);
+    });
+  };
 
   return (
     <>
-      <div className="mb-5">
-        <ExpenseForm
-          onSubmit={(expense) =>
-            setExpenses([...expenses, { ...expense, id: expenses.length + 1 }])
-          }
-        ></ExpenseForm>
-      </div>
-      <div className="mb-3">
-        <ExpenseFilter
-          onSelectCategory={(category) => setSelectedCategory(category)}
-        ></ExpenseFilter>
-      </div>
-      <ExpenseList
-        expenses={visibleExpensives}
-        onDelete={(id) => setExpenses(expenses.filter((e) => e.id !== id))}
-      ></ExpenseList>
+      {error && <p className="text-danger">{error}</p>}
+      {isLoading && <div className="spinner-border"></div>}
+      <button className="btn btn-primary mb-3" onClick={addUser}>
+        Add
+      </button>
+      <ul className="list-group">
+        {users.map((user) => (
+          <li
+            key={user.id}
+            className="list-group-item d-flex justify-content-between"
+          >
+            {user.name}
+            <div>
+              <button
+                className="btn btn-outline-secondary mx-1"
+                onClick={() => updateUser(user)}
+              >
+                Update
+              </button>
+              <button
+                className="btn btn-outline-danger"
+                onClick={() => deleteUser(user)}
+              >
+                delete
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </>
   );
 };
